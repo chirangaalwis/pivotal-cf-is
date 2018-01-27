@@ -21,13 +21,13 @@
 
 # check if Docker has been installed
 if [ ! -x "$(command -v docker)" ]; then
-    echo -e "---> Please install Docker."
+    echo "---> Please install Docker."
     exit 1
 fi
 
 # check if Bosh CLI has been installed
 if [ ! -x "$(command -v bosh)" ]; then
-    echo -e "---> Please install Bosh CLI v2."
+    echo "---> Please install Bosh CLI v2."
     exit 1
 fi
 
@@ -35,12 +35,14 @@ fi
 cd deployment
 
 # kill and remove the running MySQL Docker container
-echo -e "---> Killing MySQL Docker container..."
+echo "---> Killing MySQL Docker container..."
 docker rm -f mysql-5.7 && docker ps -a
+
+bosh -e vbox -d wso2is delete-deployment
 
 # if forced, delete the existing BOSH environment
 if [ "$1" == "--force" ]; then
-    echo -e "---> Deleting existing environment..."
+    echo "---> Deleting existing environment..."
     bosh delete-env bosh-deployment/bosh.yml \
         --state vbox/state.json \
         -o bosh-deployment/virtualbox/cpi.yml \
