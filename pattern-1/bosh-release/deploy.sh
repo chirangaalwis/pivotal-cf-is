@@ -96,9 +96,12 @@ fi
 echo "---> Uploading Stemcell..."
 bosh -e vbox upload-stemcell ${distributions}/bosh-stemcell-3445.7-warden-boshlite-ubuntu-trusty-go_agent.tgz
 
+bosh -e vbox update-cloud-config deployment/bosh-deployment/warden/cloud-config.yml
+
 # deploy the BOSH release
 echo "---> Deploying BOSH release..."
-yes | bosh -e vbox -d wso2is deploy wso2is-manifest.yml
+#yes | bosh -e vbox -d wso2is deploy wso2is-manifest.yml
+bosh -e vbox -d wso2is deploy manifest.yml
 
 # add a route to BOSH Lite VM created earlier
 echo "---> Adding route to BOSH Lite VM..."

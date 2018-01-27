@@ -22,7 +22,7 @@ compilation:
   network: wso2is_network
   reuse_compilation_vms: true
   workers: 4
-director_uuid: <%= `bosh target > /dev/null 2>&1 && bosh status --uuid` %>
+director_uuid: <%= `bosh status --uuid` %>
 jobs:
 - instances: 1
   name: wso2is_1
@@ -40,8 +40,6 @@ jobs:
   resource_pool: wso2is-resource-pool
   templates:
   - name: wso2is_2
-meta:
-  director_uuid: <%= `bosh target > /dev/null 2>&1 && bosh status --uuid` %>
 name: wso2is
 networks:
 - name: wso2is_network
@@ -61,12 +59,7 @@ properties:
     port: 4222
     user: nats
     password: nats
-
   wso2is:
-    address: wso2is
-    listen_port: 8080
-    username: admin
-    password: admin
     memory:
       max_heap: 1024
       min_heap: 1024

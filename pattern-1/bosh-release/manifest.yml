@@ -1,0 +1,41 @@
+---
+name: wso2is
+
+releases:
+- name: wso2is-release
+  version: latest
+
+stemcells:
+- alias: default
+  name: bosh-warden-boshlite-ubuntu-trusty-go_agent
+  version: latest
+
+update:
+  canaries: 1
+  max_in_flight: 1
+  canary_watch_time: 10000-120000
+  update_watch_time: 10000-120000
+
+instance_groups:
+- name: wso2is_1
+  azs: [z1]
+  instances: 1
+  jobs:
+  - name: wso2is_1
+    release: wso2is-release
+  vm_type: default
+  stemcell: default
+  networks:
+  - name: default
+    static_ips: [10.244.0.2]
+- name: wso2is_2
+  azs: [z1]
+  instances: 1
+  jobs:
+  - name: wso2is_2
+    release: wso2is-release
+  vm_type: default
+  stemcell: default
+  networks:
+  - name: default
+    static_ips: [10.244.0.3]
