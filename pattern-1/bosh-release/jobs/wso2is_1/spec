@@ -13,7 +13,6 @@ packages:
 - oraclejdk
 - mysqldriver
 - wso2is
-- common
 
 properties:
   wso2is.memory.min_heap:
@@ -45,14 +44,3 @@ properties:
   wso2is.product_db.password:
     description: wso2is mysql password
     default: root
-
-cf.apps_domain:
-    description: Domain shared by the UAA and CF API eg 'bosh-lite.com'
-cf.nats.host:
-    description: Hostname/IP of NATS
-cf.nats.port:
-    description: Port that NATS listens on
-cf.nats.username:
-    description: The user to use when authenticating with NATS
-cf.nats.password:
-    description: The password to use when authenticating with NATS
