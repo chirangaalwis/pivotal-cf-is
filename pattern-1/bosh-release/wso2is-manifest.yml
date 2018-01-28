@@ -1,3 +1,4 @@
+
 # ----------------------------------------------------------------------------
 #
 # Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
@@ -18,22 +19,10 @@
 #
 # ----------------------------------------------------------------------------
 compilation:
-  cloud_properties: {}
   network: wso2is_network
   reuse_compilation_vms: true
   workers: 4
-director_uuid: <%= `bosh target > /dev/null 2>&1 && bosh status --uuid` %>
-iaas_settings:
-  compilation_cloud_properties: {}
-  resource_pool_cloud_properties:
-  - cloud_properties: {}
-    name: wso2is_z1
-  - cloud_properties: {}
-    name: errands_z1
-  stemcell:
-    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
-    version: latest
-  watch_time: 10000-120000
+director_uuid: <%= `bosh status --uuid` %>
 jobs:
 - instances: 1
   name: wso2is_1
@@ -51,8 +40,6 @@ jobs:
   resource_pool: wso2is-resource-pool
   templates:
   - name: wso2is_2
-meta:
-  director_uuid: <%= `bosh target > /dev/null 2>&1 && bosh status --uuid` %>
 name: wso2is
 networks:
 - name: wso2is_network
@@ -66,22 +53,10 @@ networks:
     - 10.244.15.2 - 10.244.15.20
     type: manual
 properties:
-  nats:
-    machines:
-    - 10.244.0.6
-    port: 4222
-    user: nats
-    password: nats
-
   wso2is:
-    address: wso2is
-    listen_port: 8080
-    username: admin
-    password: admin
     memory:
       max_heap: 1024
       min_heap: 1024
-
 releases:
 - name: wso2is-release
   version: latest
