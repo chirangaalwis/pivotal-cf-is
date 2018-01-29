@@ -26,16 +26,19 @@ set -e
 os_name=`uname`
 
 # deployment artifacts and versions
-export wso2_product="wso2is"
-export wso2_product_version="5.4.0"
-export wso2_product_pack_identifier="${wso2_product}-${wso2_product_version}"
-export wso2_product_distribution=${wso2_product_pack_identifier}"*.zip"
-export jdk_distribution="jdk-8u*-linux-x64.tar.gz"
-export mysql_driver="mysql-connector-java-5.1.*-bin.jar"
+wso2_product="wso2is"
+wso2_product_version="5.4.0"
+wso2_product_pack_identifier="${wso2_product}-${wso2_product_version}"
+wso2_product_distribution=${wso2_product_pack_identifier}"*.zip"
+jdk_distribution="jdk-8u*-linux-x64.tar.gz"
+mysql_driver="mysql-connector-java-5.1.*-bin.jar"
 
 # repository folder structure variables
-export distributions="dist"
-export deployment="deployment"
+distributions="dist"
+deployment="deployment"
+
+# BOSH environment access configurations
+environment="vbox"
 
 # deployment variables
 mysql_docker_container="mysql-5.7"
@@ -47,6 +50,38 @@ mysql_host="127.0.0.1"
 
 # MySQL databases
 product_db=${wso2_product}_db
+
+# move to the directory containing the distributions
+cd ${distributions}
+
+# capture the exact product distribution identifiers
+mysql_driver=$(ls ${mysql_driver})
+jdk_distribution=$(ls ${jdk_distribution})
+
+# make copies of the WSO2 original product distributions with the generic WSO2 product identifiers
+if [ ! -f ${wso2_product_pack_identifier}.zip ]; then
+    cp ${wso2_product_distribution} ${wso2_product_pack_identifier}.zip
+fi
+
+# check the availability of required utility software, product packs and distributions
+
+# check if the WSO2 product distributions have been provided
+if [ ! -f ${wso2_product_pack_identifier}.zip ]; then
+    echo "---> WSO2 product distribution not found! Please add it to ${distributions} directory."
+    exit 1
+fi
+
+# check if the JDK distribution has been provided
+if [ ! -f ${jdk_distribution} ]; then
+    echo "---> Java Development Kit (JDK) distribution not found! Please add it to ${distributions} directory."
+    exit 1
+fi
+
+# check if the MySQL Connector has been provided
+if [ ! -f ${mysql_driver} ]; then
+    echo "---> MySQL Driver not found! Please add it to ${distributions} directory."
+    exit 1
+fi
 
 # check if Docker has been installed
 if [ ! -x "$(command -v docker)" ]; then
@@ -62,10 +97,11 @@ fi
 
 # check if Bosh CLI has been installed
 if [ ! -x "$(command -v bosh)" ]; then
-    echo "---> Please install Bosh CLI v2."
+    echo "---> Please install BOSH CLI v2."
     exit 1
 fi
 
+cd ..
 # start the MySQL Docker container service
 if [ ! "$(docker ps -q -f name=${mysql_docker_container})" ]; then
     echo "---> Starting MySQL Docker container..."
@@ -110,22 +146,22 @@ if [ ! -d bosh-deployment ]; then
 fi
 
 # create a directory to hold the configuration files for VirtualBox specific BOSH environment
-if [ ! -d vbox ]; then
+if [ ! -d ${environment} ]; then
     echo "---> Creating environment directory..."
-    mkdir vbox
+    mkdir ${environment}
 fi
 
 # if forced, delete any existing BOSH environment
 if [ "$1" == "--force" ]; then
     echo "---> Deleting existing BOSH environment..."
     bosh delete-env bosh-deployment/bosh.yml \
-        --state vbox/state.json \
+        --state ${environment}/state.json \
         -o bosh-deployment/virtualbox/cpi.yml \
         -o bosh-deployment/virtualbox/outbound-network.yml \
         -o bosh-deployment/bosh-lite.yml \
         -o bosh-deployment/bosh-lite-runc.yml \
         -o bosh-deployment/jumpbox-user.yml \
-        --vars-store vbox/creds.yml \
+        --vars-store ${environment}/creds.yml \
         -v director_name="Bosh Lite Director" \
         -v internal_ip=192.168.50.6 \
         -v internal_gw=192.168.50.1 \
@@ -136,13 +172,13 @@ fi
 # create a new BOSH environment with BOSH Lite as the BOSH Director and VirtualBox as the IaaS
 echo "---> Creating the BOSH environment..."
 bosh create-env bosh-deployment/bosh.yml \
-    --state vbox/state.json \
+    --state ${environment}/state.json \
     -o bosh-deployment/virtualbox/cpi.yml \
     -o bosh-deployment/virtualbox/outbound-network.yml \
     -o bosh-deployment/bosh-lite.yml \
     -o bosh-deployment/bosh-lite-runc.yml \
     -o bosh-deployment/jumpbox-user.yml \
-    --vars-store vbox/creds.yml \
+    --vars-store ${environment}/creds.yml \
     -v director_name="Bosh Lite Director" \
     -v internal_ip=192.168.50.6 \
     -v internal_gw=192.168.50.1 \
@@ -151,19 +187,26 @@ bosh create-env bosh-deployment/bosh.yml \
 
 # set an alias for the created BOSH environment
 echo "---> Setting alias for the environment..."
-bosh -e 192.168.50.6 alias-env vbox --ca-cert <(bosh int vbox/creds.yml --path /director_ssl/ca)
+bosh -e 192.168.50.6 alias-env ${environment} --ca-cert <(bosh int ${environment}/creds.yml --path /director_ssl/ca)
 
 # log into the created BOSH environment
 echo "---> Logging in..."
-bosh -e vbox login --client=admin --client-secret=$(bosh int vbox/creds.yml --path /admin_password)
+bosh -e ${environment} login --client=admin --client-secret=$(bosh int ${environment}/creds.yml --path /admin_password)
 
 cd ..
+# add the locally available WSO2 product distribution(s) and dependencies as blobs to the BOSH Director
+echo "---> Adding blobs..."
+bosh -e ${environment} add-blob ${distributions}/${jdk_distribution} oraclejdk/${jdk_distribution}
+bosh -e ${environment} add-blob ${distributions}/${mysql_driver} mysqldriver/${mysql_driver}
+bosh -e ${environment} add-blob ${distributions}/${wso2_product_pack_identifier}.zip ${wso2_product}/${wso2_product_pack_identifier}.zip
+
 # create the BOSH release
-./create.sh vbox
+echo "---> Creating BOSH release..."
+bosh -e ${environment} create-release --force
 
 # upload the BOSH release to the BOSH Director
 echo "---> Uploading BOSH release..."
-bosh -e vbox upload-release
+bosh -e ${environment} upload-release
 
 # check if the BOSH Stemcell is present and if not provided, download it
 if [ ! -f ${distributions}/bosh-stemcell-3445.7-warden-boshlite-ubuntu-trusty-go_agent.tgz ]; then
@@ -173,11 +216,11 @@ fi
 
 # upload the BOSH Stemcell to the BOSH Director
 echo "---> Uploading Stemcell..."
-bosh -e vbox upload-stemcell ${distributions}/bosh-stemcell-3445.7-warden-boshlite-ubuntu-trusty-go_agent.tgz
+bosh -e ${environment} upload-stemcell ${distributions}/bosh-stemcell-3445.7-warden-boshlite-ubuntu-trusty-go_agent.tgz
 
 # deploy the BOSH release
 echo "---> Deploying BOSH release..."
-yes | bosh -e vbox -d wso2is deploy wso2is-manifest.yml
+yes | bosh -e ${environment} -d wso2is deploy wso2is-manifest.yml
 
 # add a route to BOSH Lite VM created earlier
 echo "---> Adding route to BOSH Lite VM..."
@@ -189,4 +232,4 @@ fi
 
 # list down the running VMs
 echo "---> Listing VMs..."
-bosh -e vbox vms
+bosh -e ${environment} vms
