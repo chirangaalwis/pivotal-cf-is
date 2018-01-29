@@ -19,6 +19,9 @@
 #
 # ----------------------------------------------------------------------------
 
+# set variables
+os_name=`uname`
+
 # check if Docker has been installed
 if [ ! -x "$(command -v docker)" ]; then
     echo -e "---> Please install Docker."
@@ -38,6 +41,9 @@ cd deployment
 echo -e "---> Killing MySQL Docker container..."
 docker rm -f mysql-5.7 && docker ps -a
 
+# delete the deployment
+yes | bosh -e vbox -d wso2is delete-deployment
+
 # if forced, delete the existing BOSH environment
 if [ "$1" == "--force" ]; then
     echo -e "---> Deleting existing environment..."
@@ -56,5 +62,10 @@ if [ "$1" == "--force" ]; then
         -v outbound_network_name=NatNetwork
 fi
 
-# remove the added route
-sudo ip route del 10.244.0.0/16 via 192.168.50.6
+# remove the added route to BOSH Lite VM
+echo "---> Removing route to BOSH Lite VM..."
+if [[ "$os_name" == 'Darwin' ]]; then
+    sudo route delete -net 10.244.0.0/16 192.168.50.6
+else
+    sudo ip route del 10.244.0.0/16 via 192.168.50.6
+fi

@@ -180,7 +180,7 @@ echo "---> Deploying BOSH release..."
 yes | bosh -e vbox -d wso2is deploy wso2is-manifest.yml
 
 # add a route to BOSH Lite VM created earlier
-echo "---> Adding route to BOSH lite VM..."
+echo "---> Adding route to BOSH Lite VM..."
 if [[ "$os_name" == 'Darwin' ]]; then
     sudo route add -net 10.244.0.0/16 192.168.50.6
 else
