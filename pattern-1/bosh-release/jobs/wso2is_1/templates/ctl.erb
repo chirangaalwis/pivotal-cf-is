@@ -88,7 +88,7 @@ case $1 in
 
   stop)
 
-    kill -9 `cat ${pid_file}`
+    ${wso2_is_home}/bin/wso2server.sh stop
     rm -f ${pid_file}
     ;;
 

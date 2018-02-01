@@ -44,13 +44,11 @@ name: wso2is
 networks:
 - name: wso2is_network
   subnets:
-  - cloud_properties:
-      name: random
-    range: 10.244.15.0/24
+  - range: 10.244.15.0/24
     reserved:
     - 10.244.15.1
     static:
-    - 10.244.15.2 - 10.244.15.20
+    - 10.244.15.2 - 10.244.15.5
     type: manual
 properties:
   wso2is:
