@@ -27,7 +27,7 @@ jobs:
   name: wso2is_1
   networks:
   - name: wso2is_network
-    static_ips: [10.244.15.2]
+    static_ips: [10.0.0.11]
   resource_pool: wso2is-resource-pool
   templates:
   - name: wso2is_1
@@ -35,7 +35,7 @@ jobs:
   name: wso2is_2
   networks:
   - name: wso2is_network
-    static_ips: [10.244.15.3]
+    static_ips: [10.0.0.12]
   resource_pool: wso2is-resource-pool
   templates:
   - name: wso2is_2
@@ -44,11 +44,11 @@ networks:
 - name: wso2is_network
   type: manual
   subnets:
-  - range: 10.244.15.0/24
+  - range: 10.0.0.0/24
     reserved:
-    - 10.244.15.1
+    - 10.0.0.1
     static:
-    - 10.244.15.2 - 10.244.15.5
+    - 10.0.0.11 - 10.0.0.13
 properties:
   wso2is:
     memory:
@@ -58,8 +58,7 @@ releases:
 - name: wso2is-release
   version: latest
 resource_pools:
-- cloud_properties: {}
-  name: wso2is-resource-pool
+- name: wso2is-resource-pool
   network: wso2is_network
   stemcell:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
